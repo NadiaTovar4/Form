@@ -5,6 +5,7 @@ if ($conexion->connect_error) {
     die("Error de conexión: " . $conexion->connect_error);
 }
 
+
 // Guardar nuevo usuario
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["guardar"])) {
     $nombre = $_POST["nombre"];
