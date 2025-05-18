@@ -1,16 +1,27 @@
-<?php 
-$conexion = new mysqli("localhost", "root", "", "mibase");
+<?php
+// Mostrar errores para depuración (quítalos en producción)
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
-if ($conexion->connect_error) {
-    die("Error de conexión: " . $conexion->connect_error);
-}
+// Datos de conexión proporcionados por Azure
+$server = "tcp:elservidor-1.database.windows.net,1433";
+$database = "basedatos";
+$username = "usuarioserver";
+$password = "Estaesla34"; // <- Cambia esto por tu contraseña real
 
+try {
+    $conexion = new PDO("sqlsrv:server=$server;Database=$database", $username, $password);
+    $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Guardar nuevo usuario
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["guardar"])) {
-    $nombre = $_POST["nombre"];
-    $correo = $_POST["correo"];
-    $conexion->query("INSERT INTO usuarios (nombre, correo) VALUES ('$nombre', '$correo')");
+    // Insertar usuario si se envió el formulario
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["guardar"])) {
+        $nombre = $_POST["nombre"];
+        $correo = $_POST["correo"];
+        $stmt = $conexion->prepare("INSERT INTO usuarios (nombre, correo) VALUES (?, ?)");
+        $stmt->execute([$nombre, $correo]);
+    }
+} catch (PDOException $e) {
+    die("Error de conexión: " . $e->getMessage());
 }
 ?>
 
@@ -35,8 +46,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["guardar"])) {
         <h2>Usuarios Registrados</h2>
         <ul>
             <?php
-            $resultado = $conexion->query("SELECT * FROM usuarios");
-            while ($fila = $resultado->fetch_assoc()) {
+            $stmt = $conexion->query("SELECT nombre, correo FROM usuarios");
+            while ($fila = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 echo "<li>{$fila['nombre']} - {$fila['correo']}</li>";
             }
             ?>
@@ -44,3 +55,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["guardar"])) {
     <?php endif; ?>
 </body>
 </html>
+
